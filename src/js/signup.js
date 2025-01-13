@@ -1,12 +1,18 @@
-htmx.on('#login-container', 'htmx:afterRequest', function(evt) {
+document.body.addEventListener('htmx:afterRequest', function(evt) {
     if (evt.detail.successful) {
-        try {
-            const response = JSON.parse(evt.detail.xhr.response);
-            if (response.success && response.redirect) {
-                window.location.href = response.redirect;
-            }
-        } catch (e) {
-            // Response wasn't JSON, just update the UI normally
+        let response = JSON.parse(evt.detail.xhr.responseText);
+        
+        if (response.success) {
+            // Redirect on success
+            window.location.href = response.redirect;
+        } else {
+            // Show error message
+            document.getElementById('signup-response').innerHTML = 
+                `<div class="alert alert-danger text-center">${response.message}</div>`;
         }
+    } else {
+        // Show generic error for failed requests
+        document.getElementById('signup-response').innerHTML = 
+            '<div class="alert alert-danger text-center">An error occurred. Please try again.</div>';
     }
 });

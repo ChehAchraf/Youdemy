@@ -109,7 +109,7 @@ Session::start(); // Make sure session is started before any session operations
                             </a>
                             <div class="dropdown-menu dropdown-menu-right m-0">
                                 <?php if(Session::get('role') === 'teacher'): ?>
-                                    <a href="dashboard/teacher.php" class="dropdown-item">
+                                    <a href="teacher.php" class="dropdown-item">
                                         <i class="fa fa-chalkboard-teacher mr-2"></i>Teacher Dashboard
                                     </a>
                                 <?php elseif(Session::get('role') === 'student'): ?>

@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
 
+
+
 use App\Interfaces\ICourse;
 use PDO;
 
@@ -20,7 +22,7 @@ class Course implements ICourse {
         try {
             $this->db->beginTransaction();
 
-            // Insert course
+
             $stmt = $this->db->prepare("INSERT INTO courses (title, description, teacherId) VALUES (?, ?, ?)");
             $stmt->execute([$this->title, $this->description, $this->teacherId]);
             $courseId = $this->db->lastInsertId();
