@@ -1,8 +1,9 @@
 <?php
 namespace App\Models;
 use App\Models\Database;
+use App\Models\Session;
 
-class UserControllers {
+class User {
     private $id;
     private $firstname;
     private $lastname;
@@ -11,8 +12,6 @@ class UserControllers {
     private $role;
     private $is_active;
     private $hashed_password;
-
-
 
     public function __construct($id, $firstname, $lastname, $email, $password, $role, $is_active) {
         $this->id = $id;
@@ -29,11 +28,11 @@ class UserControllers {
         $db = Database::getInstance();
         $conn = $db->getConnection();
 
-        $stmt = $conn->prepare("INSERT INTO users (firstname, lastname, email, password, role, isActive) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, password, role, isActive) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$this->firstname, $this->lastname, $this->email, $this->hashed_password, $this->role, $this->is_active]);
     }
 
-    public function login($pdo){
+    public function login(){
         $db = Database::getInstance();
         $conn = $db->getConnection();
 
@@ -42,9 +41,13 @@ class UserControllers {
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if($user && password_verify($this->password, $user['password'])){
-            return $user;
+            Session::set('user_id', $user['id']);
+            Session::set('firstname', $user['firstName']);
+            Session::set('lastname', $user['lastName']);
+            Session::set('role', $user['role']);
+            Session::set('is_active', $user['isActive']);
+            return true;
         }
-        return null;
-
+        return false;
     }
 }

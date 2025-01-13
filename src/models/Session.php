@@ -1,4 +1,5 @@
 <?php
+namespace App\Models;
 class Session {
     public static function start() {
         if (session_status() === PHP_SESSION_NONE) {
@@ -20,7 +21,7 @@ class Session {
     }
 
     public static function isLoggedIn() {
-        return isset($_SESSION['user_id']);
+        return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
     }
 
     public static function requireLogin() {

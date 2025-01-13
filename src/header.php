@@ -1,3 +1,10 @@
+<?php 
+require_once __DIR__ . '/../vendor/autoload.php';
+use App\Models\Session;
+
+Session::start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -65,7 +72,7 @@
     <!-- Navbar Start -->
     <div class="container-fluid p-0">
         <nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-lg-5">
-            <a href="index.html" class="navbar-brand ml-lg-3">
+            <a href="index.php" class="navbar-brand ml-lg-3">
                 <h1 class="m-0 text-uppercase text-primary"><i class="fa fa-book-reader mr-3"></i>Edukate</h1>
             </a>
             <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
@@ -87,8 +94,70 @@
                     </div>
                     <a href="contact.php" class="nav-item nav-link">Contact</a>
                 </div>
-                <a href="login.php" class="btn btn-primary py-2 px-4 d-none d-lg-block">Login</a>
+
+                <!-- User Menu -->
+                <div class="navbar-nav">
+                    <?php if(!Session::isLoggedIn()): ?>
+                        <a href="login.php" class="btn btn-primary py-2 px-4 d-none d-lg-block">Login</a>
+                    <?php else: ?>
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-user-circle mr-2"></i>
+                                <?php 
+                                $firstname = Session::get('firstname');
+                                $lastname = Session::get('lastname');
+                                echo htmlspecialchars($firstname . ' ' . $lastname); 
+                                ?>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right m-0">
+                                <?php if(Session::get('role') === 'teacher'): ?>
+                                    <a href="dashboard/teacher.php" class="dropdown-item">
+                                        <i class="fa fa-chalkboard-teacher mr-2"></i>Teacher Dashboard
+                                    </a>
+                                <?php elseif(Session::get('role') === 'student'): ?>
+                                    <a href="dashboard/student.php" class="dropdown-item">
+                                        <i class="fa fa-graduation-cap mr-2"></i>My Learning
+                                    </a>
+                                <?php elseif(Session::get('role') === 'admin'): ?>
+                                    <a href="admin-dashboard.php" class="dropdown-item">
+                                        <i class="fa fa-cog mr-2"></i>Admin Dashboard
+                                    </a>
+                                <?php endif; ?>
+                                
+                                <a href="profile.php" class="dropdown-item">
+                                    <i class="fa fa-user mr-2"></i>Profile
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item text-danger" 
+                                   hx-post="helper/logout.php" 
+                                   hx-confirm="Are you sure you want to logout?"
+                                   hx-push-url="true">
+                                    <i class="fa fa-sign-out-alt mr-2"></i>Logout
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </nav>
     </div>
     <!-- Navbar End -->
+
+    <!-- Add some CSS for the dropdown -->
+    <style>
+    .navbar-nav .dropdown-menu {
+        margin-top: 0;
+    }
+    .navbar-nav .dropdown-item {
+        padding: .5rem 1.5rem;
+    }
+    .navbar-nav .dropdown-item i {
+        width: 20px;
+    }
+    .navbar-nav .dropdown-divider {
+        margin: .5rem 0;
+    }
+    .navbar-nav .dropdown-toggle::after {
+        vertical-align: middle;
+    }
+    </style>
