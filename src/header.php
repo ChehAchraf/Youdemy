@@ -2,9 +2,8 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 use App\Models\Session;
 
-Session::start();
+Session::start(); // Make sure session is started before any session operations
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -95,7 +94,6 @@ Session::start();
                     <a href="contact.php" class="nav-item nav-link">Contact</a>
                 </div>
 
-                <!-- User Menu -->
                 <div class="navbar-nav">
                     <?php if(!Session::isLoggedIn()): ?>
                         <a href="login.php" class="btn btn-primary py-2 px-4 d-none d-lg-block">Login</a>
@@ -142,22 +140,3 @@ Session::start();
         </nav>
     </div>
     <!-- Navbar End -->
-
-    <!-- Add some CSS for the dropdown -->
-    <style>
-    .navbar-nav .dropdown-menu {
-        margin-top: 0;
-    }
-    .navbar-nav .dropdown-item {
-        padding: .5rem 1.5rem;
-    }
-    .navbar-nav .dropdown-item i {
-        width: 20px;
-    }
-    .navbar-nav .dropdown-divider {
-        margin: .5rem 0;
-    }
-    .navbar-nav .dropdown-toggle::after {
-        vertical-align: middle;
-    }
-    </style>

@@ -2,7 +2,6 @@
 namespace App\Models;
 use App\Models\Database;
 use App\Models\Session;
-
 class User {
     private $id;
     private $firstname;
@@ -12,6 +11,8 @@ class User {
     private $role;
     private $is_active;
     private $hashed_password;
+
+
 
     public function __construct($id, $firstname, $lastname, $email, $password, $role, $is_active) {
         $this->id = $id;
@@ -28,7 +29,7 @@ class User {
         $db = Database::getInstance();
         $conn = $db->getConnection();
 
-        $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, password, role, isActive) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (firstname, lastname, email, password, role, isActive) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$this->firstname, $this->lastname, $this->email, $this->hashed_password, $this->role, $this->is_active]);
     }
 

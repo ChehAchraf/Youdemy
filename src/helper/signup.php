@@ -6,7 +6,7 @@ use App\Models\Database;
 use App\Models\User;
 use App\Models\Session;
 
-header('Content-Type: application/json'); 
+header('Content-Type: text/html'); 
 
 try {
     $email = $_POST['email'] ?? '';
@@ -28,19 +28,12 @@ try {
             'redirect' => '/youdemy/src/index.php'
         ]);
         exit;
+    } else {
+        http_response_code(401);
+        echo "<div class='alert alert-danger text-center'>Invalid credentials</div>";
     }
-    
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Invalid credentials'
-    ]);
-    
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Server error: ' . $e->getMessage()
-    ]);
+    echo "<div class='alert alert-danger text-center'>Server error: " . $e->getMessage() . "</div>";
 }
     ?>

@@ -4,8 +4,8 @@ use App\Models\Session;
 
 Session::start();
 
-// Only redirect if already logged in and not trying to login
-if (Session::isLoggedIn() && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+// Redirect if already logged in
+if (Session::isLoggedIn()) {
     header('Location: index.php');
     exit();
 }
