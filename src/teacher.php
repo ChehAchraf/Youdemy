@@ -3,6 +3,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Models\Session;
 use App\Models\Database;
+use App\Models\Course;
 
 
 Session::start();
@@ -86,22 +87,46 @@ include 'header.php';
                                     <tr>
                                         <th>Course Name</th>
                                         <th>Category</th>
-                                        <th>Students</th>
+                                        <th>Price</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>Web Development Bootcamp</td>
-                                        <td>Development</td>
-                                        <td>45</td>
-                                        <td><span class="badge badge-success">Active</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info">Edit</button>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
+                                    <?php
+                                    $courseModel = new Course();
+                                    $courses = $courseModel->getTeacherCourses(Session::get('user_id'));
+
+                                    if ($courses) {
+                                        foreach($courses as $course) {
+                                            $status = $course->isApproved ? 
+                                                '<span class="badge badge-success">Active</span>' : 
+                                                '<span class="badge badge-warning">Pending</span>';
+                                                
+                                            echo "<tr>
+                                                <td>
+                                                    <img src='{$course->thumbnail}' alt='thumbnail' class='img-thumbnail mr-2' style='width: 50px; height: 50px; object-fit: cover;'>
+                                                    " . htmlspecialchars($course->title) . "
+                                                </td>
+                                                <td>" . htmlspecialchars($course->category_name) . "</td>
+                                                <td>$" . number_format($course->price, 2) . "</td>
+                                                <td>{$status}</td>
+                                                <td>
+                                                    <button class='btn btn-sm btn-info' 
+                                                            onclick='editCourse({$course->id})'>
+                                                        <i class='fas fa-edit'></i>
+                                                    </button>
+                                                    <button class='btn btn-sm btn-danger' 
+                                                            onclick='deleteCourse({$course->id})'>
+                                                        <i class='fas fa-trash'></i>
+                                                    </button>
+                                                </td>
+                                            </tr>";
+                                        }
+                                    } else {
+                                        echo "<tr><td colspan='5' class='text-center'>No courses found</td></tr>";
+                                    }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
@@ -278,6 +303,51 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         });
     }
 });
+
+function deleteCourse(courseId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('helper/delete-course.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ courseId: courseId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Your course has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        data.message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+}
+
+function editCourse(courseId) {
+    // Implement edit functionality
+    window.location.href = `edit-course.php?id=${courseId}`;
+}
 </script>
 
 <!-- Remove multiple footer includes -->
