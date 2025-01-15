@@ -1,89 +1,96 @@
 <?php
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use App\Models\Database;
 use App\Models\User;
 use App\Models\Session;
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Set headers
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
 
 try {
-    // Validate input
-    $firstname = trim($_POST['firstname'] ?? '');
-    $lastname = trim($_POST['lastname'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
+    // Log raw input for debugging
+    $raw_input = file_get_contents('php://input');
+    error_log('Raw input: ' . $raw_input);
+    error_log('POST data: ' . print_r($_POST, true));
 
-    // Validation checks
-    if (empty($firstname) || empty($lastname) || empty($email) || empty($password)) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'All fields are required'
-        ]);
-        exit;
+    // Validate required fields
+    $required = ['firstname', 'lastname', 'email', 'password', 'confirm_password', 'role'];
+    foreach ($required as $field) {
+        if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+            throw new Exception("Field '{$field}' is required");
+        }
     }
 
-    if ($password !== $confirm_password) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Passwords do not match'
-        ]);
-        exit;
+    // Validate email format
+    if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        throw new Exception("Invalid email format");
     }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid email format'
-        ]);
-        exit;
+    // Validate password match
+    if ($_POST['password'] !== $_POST['confirm_password']) {
+        throw new Exception("Passwords do not match");
     }
 
-    // Check if email already exists
-    $db = Database::getInstance();
-    $conn = $db->getConnection();
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    
-    if ($stmt->fetch()) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Email already exists'
-        ]);
-        exit;
+    // Validate role
+    $allowedRoles = ['student', 'teacher'];
+    if (!in_array($_POST['role'], $allowedRoles)) {
+        throw new Exception("Invalid role selected");
     }
 
-    // Create new user
+    // Validate teacher specialization
+    if ($_POST['role'] === 'teacher' && empty($_POST['specialization'])) {
+        throw new Exception("Specialization is required for teachers");
+    }
+
+    // Create user object
     $user = new User(
         null,
-        $firstname,
-        $lastname,
-        $email,
-        $password,
-        'student', // Default role
-        1  // Active by default
+        trim($_POST['firstname']),
+        trim($_POST['lastname']),
+        trim($_POST['email']),
+        $_POST['password'],
+        $_POST['role'],
+        true  // is_active parameter
     );
 
-    $user->register($db);
+    // Add specialization for teachers
+    if ($_POST['role'] === 'teacher') {
+        $user->setSpecialization(trim($_POST['specialization']));
+        $user->setVerificationStatus('pending');
+    }
 
-    // Auto login after registration
-    if ($user->login()) {
+    // Register user
+    if ($user->register()) {
+        $message = $_POST['role'] === 'teacher' 
+            ? "<div class='alert alert-success'>Registration successful! Your teacher account is pending admin approval.</div>"
+            : "<div class='alert alert-success'>Registration successful! Redirecting to login page...</div>";
+
         echo json_encode([
             'success' => true,
-            'redirect' => '/youdemy/src/index.php'
+            'message' => $message
         ]);
-        exit;
+    } else {
+        throw new Exception("Registration failed. The email might already be in use.");
     }
 
 } catch (Exception $e) {
-    http_response_code(500);
+    error_log('Registration error: ' . $e->getMessage());
+    error_log('Stack trace: ' . $e->getTraceAsString());
+    
+    http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Server error: ' . $e->getMessage()
+        'message' => "<div class='alert alert-danger'>" . htmlspecialchars($e->getMessage()) . "</div>",
+        'debug' => [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]
     ]);
 } 

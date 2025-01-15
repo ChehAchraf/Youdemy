@@ -86,7 +86,45 @@
     <script src="lib/owlcarousel/owl.carousel.min.js"></script>
 
     <!-- Template Javascript -->
-    <script src="js/main.js"></script>
+    <script>
+        $(document).ready(function() {
+            console.log('Document ready...');
+            
+            // Initialize carousels
+            var $coursesCarousel = $(".courses-carousel");
+            var $carouselItems = $coursesCarousel.find('.courses-item');
+            console.log('Found courses carousel elements:', $coursesCarousel.length);
+            console.log('Found course items:', $carouselItems.length);
+            console.log('Carousel HTML:', $coursesCarousel.html());
+            
+            if ($coursesCarousel.length > 0) {
+                try {
+                    $coursesCarousel.owlCarousel({
+                        autoplay: true,
+                        smartSpeed: 1500,
+                        loop: $carouselItems.length > 1,  // Only loop if we have multiple items
+                        dots: false,
+                        nav : false,
+                        margin: 20,
+                        responsive: {
+                            0: { items: 1 },
+                            576: { items: Math.min(2, $carouselItems.length) },
+                            768: { items: Math.min(3, $carouselItems.length) },
+                            992: { items: Math.min(4, $carouselItems.length) }
+                        }
+                    }).on('initialized.owl.carousel', function(e) {
+                        console.log('Courses carousel initialized with', e.item.count, 'items');
+                    });
+                    console.log('Carousel initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing carousel:', error);
+                }
+            } else {
+                console.log('No carousel container found!');
+                console.log('Page HTML:', $('body').html());
+            }
+        });
+    </script>
 </body>
 
 </html>

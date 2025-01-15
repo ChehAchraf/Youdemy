@@ -41,7 +41,11 @@
 
 
     // Courses carousel
-    $(".courses-carousel").owlCarousel({
+    console.log('Initializing courses carousel...');
+    var $coursesCarousel = $(".courses-carousel");
+    console.log('Found carousel elements:', $coursesCarousel.length);
+    
+    $coursesCarousel.owlCarousel({
         autoplay: true,
         smartSpeed: 1500,
         loop: true,
@@ -61,6 +65,8 @@
                 items:4
             }
         }
+    }).on('initialized.owl.carousel', function(e) {
+        console.log('Carousel initialized with', e.item.count, 'items');
     });
 
 

@@ -1,56 +1,76 @@
 <?php
 namespace App\Models;
-
-use PDO;
-
-class Course {
+use pdo;
+abstract class Course {
     protected $db;
-    protected $id;
-    protected $title;
-    protected $description;
-    protected $thumbnail;
-    protected $media;
-    protected $teacherId;
-    protected $categoryId;
-    protected $price;
-    protected $isApproved;
+    protected $user_id;
+    protected $role;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
+        $this->user_id = Session::get('user_id');
+        $this->role = Session::get('role');
     }
 
-    public function getTeacherCourses($teacherId) {
-        $stmt = $this->db->prepare("
-            SELECT c.*, cat.name as category_name 
-            FROM courses c 
-            LEFT JOIN categories cat ON c.categoryId = cat.id 
-            WHERE c.teacherId = ?
-            ORDER BY c.id DESC
-        ");
-        
-        $stmt->execute([$teacherId]);
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
-    }
 
-    public function delete($courseId, $teacherId) {
-        try {
-            // Verify ownership
-            $stmt = $this->db->prepare("SELECT teacherId FROM courses WHERE id = ?");
-            $stmt->execute([$courseId]);
-            $course = $stmt->fetch(PDO::FETCH_OBJ);
+    abstract public function addCourse(array $courseData): bool;
+    abstract public function displayCourse(int $id): ?object;
+    abstract public function getAllCourses(): array;
+    abstract public function getPendingCourses(): array;
+    abstract public function getDeletedCourses(): array;
 
-            if (!$course || $course->teacherId != $teacherId) {
-                throw new \Exception('Unauthorized access to this course');
+
+    protected function validateCourseData(array $courseData): void {
+        $requiredFields = ['title', 'description', 'price', 'categoryId'];
+        foreach ($requiredFields as $field) {
+            if (!isset($courseData[$field])) {
+                throw new \Exception("Missing required field: {$field}");
             }
-
-            // Delete course
-            $stmt = $this->db->prepare("DELETE FROM courses WHERE id = ?");
-            return $stmt->execute([$courseId]);
-
-        } catch (\Exception $e) {
-            throw $e;
         }
     }
 
-    // Existing methods...
+    protected function getCourseStatus(string $status): string {
+        return match($status) {
+            'pending' => 'Pending Approval',
+            'approved' => 'Active',
+            default => $status
+        };
+    }
+
+    public function getApprovedCourses(): array {
+        try {
+            if (!$this->db) {
+                throw new \Exception('Database connection not established');
+            }
+
+            $query = "
+                SELECT 
+                    c.*, 
+                    cat.name as category_name,
+                    CONCAT(u.firstName, ' ', u.lastName) as teacher_name,
+                    (SELECT COUNT(*) FROM enrollments e WHERE e.courseId = c.id) as enrollment_count
+                FROM courses c
+                LEFT JOIN categories cat ON c.categoryId = cat.id
+                LEFT JOIN users u ON c.teacherId = u.id
+                WHERE c.isApproved = 1
+                AND c.deleted_at IS NULL
+                ORDER BY c.createdAt DESC
+            ";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $courses = $stmt->fetchAll(PDO::FETCH_OBJ);
+            
+            if (empty($courses)) {
+                error_log('No approved courses found');
+            } else {
+                error_log('Found ' . count($courses) . ' approved courses');
+            }
+            
+            return $courses;
+        } catch (\Exception $e) {
+            error_log('Error in Course::getApprovedCourses: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 } 

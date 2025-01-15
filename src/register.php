@@ -26,16 +26,8 @@ include 'header.php';
                     <div id="signup-response"></div>
                     
                     <form hx-post="helper/register.php" 
-                          hx-target="#signup-response" 
-                          hx-swap="innerHTML"
-                          hx-indicator="#loading">
+                          hx-target="#signup-response">
                         
-                        <div id="loading" class="htmx-indicator">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
-
                         <div class="form-group">
                             <input type="text" name="firstname" class="form-control border-0 p-4" placeholder="First Name" required />
                         </div>
@@ -51,6 +43,22 @@ include 'header.php';
                         <div class="form-group">
                             <input type="password" name="confirm_password" class="form-control border-0 p-4" placeholder="Confirm Password" required />
                         </div>
+                        <div class="form-group">
+                            <select name="role" class="form-control border-0 p-4" required>
+                                <option value="">Select Role</option>
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                            </select>
+                        </div>
+                        <!-- Teacher-specific fields (hidden by default) -->
+                        <div id="teacher-fields" style="display: none;">
+                            <div class="form-group">
+                                <input type="text" name="specialization" class="form-control border-0 p-4" placeholder="Specialization (e.g., Web Development, Data Science)" />
+                            </div>
+                            <div class="alert alert-info">
+                                <small>Note: Teacher accounts require admin approval before you can start creating courses.</small>
+                            </div>
+                        </div>
                         <div>
                             <button class="btn btn-primary btn-block py-3" type="submit">Sign Up Now</button>
                         </div>
@@ -59,6 +67,58 @@ include 'header.php';
                             <a href="login.php" class="text-primary">Login</a>
                         </div>
                     </form>
+
+                    <script>
+                    document.querySelector('select[name="role"]').addEventListener('change', function() {
+                        const teacherFields = document.getElementById('teacher-fields');
+                        const specializationInput = document.querySelector('input[name="specialization"]');
+                        
+                        if (this.value === 'teacher') {
+                            teacherFields.style.display = 'block';
+                            specializationInput.required = true;
+                        } else {
+                            teacherFields.style.display = 'none';
+                            specializationInput.required = false;
+                        }
+                    });
+
+                    // Add event listeners for HTMX events
+                    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                        console.log('Sending request...', evt.detail);
+                    });
+
+                    document.body.addEventListener('htmx:afterRequest', function(evt) {
+                        console.log('Response received:', evt.detail);
+                        
+                        if (evt.detail.failed) {
+                            console.error('Request failed:', evt.detail.xhr.response);
+                            document.getElementById('signup-response').innerHTML = 
+                                '<div class="alert alert-danger">Registration failed. Please try again.</div>';
+                            return;
+                        }
+
+                        try {
+                            const response = JSON.parse(evt.detail.xhr.response);
+                            document.getElementById('signup-response').innerHTML = response.message;
+                            
+                            if (response.success) {
+                                setTimeout(() => {
+                                    window.location.href = 'login.php';
+                                }, 2000);
+                            }
+                        } catch (error) {
+                            console.error('Error parsing response:', error);
+                            document.getElementById('signup-response').innerHTML = 
+                                '<div class="alert alert-danger">An unexpected error occurred. Please try again.</div>';
+                        }
+                    });
+
+                    document.body.addEventListener('htmx:responseError', function(evt) {
+                        console.error('Response error:', evt.detail);
+                        document.getElementById('signup-response').innerHTML = 
+                            '<div class="alert alert-danger">An error occurred while processing your request. Please try again.</div>';
+                    });
+                    </script>
                 </div>
             </div>
         </div>

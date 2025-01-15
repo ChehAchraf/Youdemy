@@ -2,17 +2,19 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Models\Session;
+use App\Models\TeacherCourse;
 use App\Models\Database;
-use App\Models\Course;
-
 
 Session::start();
 
-// Check if user is teacher
-if (Session::get('role') !== 'teacher') {
-    header('Location: ../login.php');
+// Check if user is logged in and is a teacher
+if (!Session::get('user_id') || Session::get('role') !== 'teacher') {
+    header('Location: login.php');
     exit();
 }
+
+$courseModel = new TeacherCourse();
+$courses = $courseModel->getAllCourses();
 
 include 'header.php';
 ?>
@@ -94,14 +96,16 @@ include 'header.php';
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $courseModel = new Course();
-                                    $courses = $courseModel->getTeacherCourses(Session::get('user_id'));
+                                    $courseModel = new TeacherCourse();
+                                    $courses = $courseModel->getAllCourses();
 
                                     if ($courses) {
                                         foreach($courses as $course) {
-                                            $status = $course->isApproved ? 
-                                                '<span class="badge badge-success">Active</span>' : 
-                                                '<span class="badge badge-warning">Pending</span>';
+                                            $statusClass = match($course->status_label) {
+                                                'Approved' => 'success',
+                                                'Rejected' => 'danger',
+                                                default => 'warning'
+                                            };
                                                 
                                             echo "<tr>
                                                 <td>
@@ -110,14 +114,12 @@ include 'header.php';
                                                 </td>
                                                 <td>" . htmlspecialchars($course->category_name) . "</td>
                                                 <td>$" . number_format($course->price, 2) . "</td>
-                                                <td>{$status}</td>
+                                                <td><span class='badge badge-{$statusClass}'>{$course->status_label}</span></td>
                                                 <td>
-                                                    <button class='btn btn-sm btn-info' 
-                                                            onclick='editCourse({$course->id})'>
+                                                    <button class='btn btn-sm btn-primary' onclick='editCourse({$course->id})'>
                                                         <i class='fas fa-edit'></i>
                                                     </button>
-                                                    <button class='btn btn-sm btn-danger' 
-                                                            onclick='deleteCourse({$course->id})'>
+                                                    <button class='btn btn-sm btn-danger' onclick='deleteCourse({$course->id})'>
                                                         <i class='fas fa-trash'></i>
                                                     </button>
                                                 </td>
@@ -156,23 +158,15 @@ include 'header.php';
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label>Category</label>
-                                    <select name="category" class="form-control" required>
-                                    <?php
-                                    $db = Database::getInstance()->getConnection();
-                                    $categories = $db->query("SELECT * FROM categories ORDER BY name")->fetchAll(PDO::FETCH_OBJ);
-                                    
-                                    ob_start(); // Start output buffering
-                                    if ($categories) {
-                                        foreach($categories as $category) {
-                                            $id = htmlspecialchars($category->id);
-                                            $name = htmlspecialchars($category->name);
-                                            echo "<option value=\"$id\">$name</option>";
+                                    <select name="categoryId" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <?php
+                                        $db = Database::getInstance()->getConnection();
+                                        $stmt = $db->query("SELECT id, name FROM categories ORDER BY name");
+                                        while ($category = $stmt->fetch(PDO::FETCH_OBJ)) {
+                                            echo "<option value='" . $category->id . "'>" . htmlspecialchars($category->name) . "</option>";
                                         }
-                                    } else {
-                                        echo '<option value="">No categories available</option>';
-                                    }
-                                    echo ob_get_clean(); // Get and clean the buffer
-                                    ?>
+                                        ?>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -190,9 +184,16 @@ include 'header.php';
                                     <input type="file" name="content" class="form-control" accept="video/*,.pdf" required>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label>Tags (comma separated)</label>
+                                <input type="text" name="tags" class="form-control" placeholder="e.g., javascript, web development, programming">
+                                <small class="form-text text-muted">Enter tags separated by commas. These help students find your course.</small>
+                            </div>
                             <button type="submit" class="btn btn-primary">Create Course</button>
                         </form>
-                        <div id="add-course-response"></div>
+                        <div id="add-course-response">
+                            
+                        </div>
                     </div>
 
                     <!-- Students Tab -->

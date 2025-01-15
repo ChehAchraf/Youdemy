@@ -30,8 +30,27 @@ Session::start(); // Make sure session is started before any session operations
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
 
-    <!-- Import the Htmx  -->
+    <!-- Add these before the closing </head> tag -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Import HTMX after Bootstrap -->
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+    <script>
+    $(document).ready(function() {
+        // Initialize Bootstrap components
+        $('[data-toggle="dropdown"]').dropdown();
+        
+        // Optional: Close dropdowns when clicking outside
+        $(document).click(function(e) {
+            if (!$(e.target).closest('.dropdown').length) {
+                $('.dropdown-menu').removeClass('show');
+            }
+        });
+    });
+    </script>
 </head>
 
 <body>
@@ -127,9 +146,10 @@ Session::start(); // Make sure session is started before any session operations
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item text-danger" 
-                                   hx-post="helper/logout.php" 
+                                   hx-post="helper/logout.php"
+                                   hx-trigger="click"
                                    hx-confirm="Are you sure you want to logout?"
-                                   hx-push-url="true">
+                                   hx-swap="none">
                                     <i class="fa fa-sign-out-alt mr-2"></i>Logout
                                 </a>
                             </div>
@@ -140,3 +160,30 @@ Session::start(); // Make sure session is started before any session operations
         </nav>
     </div>
     <!-- Navbar End -->
+
+    <script>
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.target.classList.contains('text-danger')) { // Logout link
+            const response = JSON.parse(evt.detail.xhr.response);
+            
+            if (response.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: response.message,
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.href = response.redirect;
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: response.message,
+                    icon: 'error',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        }
+    });
+    </script>

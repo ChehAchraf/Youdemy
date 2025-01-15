@@ -1,5 +1,32 @@
-<?php include 'header.php'; ?>
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Models\TeacherCourse;
+use App\Models\Database;
+use App\Models\Session;
+use App\Models\PublicCourse;
+
+
+
+try {
+    Session::start();
+    
+    // Debug database connection
+    $db = Database::getInstance()->getConnection();
+    if (!$db) {
+        error_log('Database connection failed in index.php');
+        throw new \Exception('Database connection failed');
+    }
+    error_log('Database connection successful');
+    
+    include 'header.php';
+} catch (\Exception $e) {
+    echo 'An error occurred: ' . $e->getMessage();
+}
+?>
 
     <!-- Header Start -->
     <div class="jumbotron jumbotron-fluid position-relative overlay-bottom" style="margin-bottom: 90px;">
@@ -126,6 +153,21 @@
 
 
     <!-- Courses Start -->
+    <style>
+        .courses-carousel .courses-item {
+            min-height: 300px;
+            background: #fff;
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+        .courses-text {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+        }
+        .owl-carousel .owl-item {
+            min-height: 300px;
+        }
+    </style>
     <div class="container-fluid px-0 py-5">
         <div class="row mx-0 justify-content-center pt-5">
             <div class="col-lg-6">
@@ -135,98 +177,79 @@
                 </div>
             </div>
         </div>
-        <div class="owl-carousel courses-carousel">
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-1.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
+        <div class="container">
+            <div class="owl-carousel courses-carousel">
+                <?php
+                try {
+                    $courseModel = new PublicCourse();
+                    $courses = $courseModel->getApprovedCourses();
+                    
+                    if (empty($courses)) {
+                        ?>
+                        <div class="courses-item position-relative">
+                            <div class="courses-text">
+                                <h4 class="text-center text-white px-3">No courses available</h4>
+                                <div class="w-100 bg-white text-center p-4">
+                                    <p class="text-muted">Check back later for new courses!</p>
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                    } else {
+                        foreach ($courses as $course) {
+                            $thumbnail = $course->thumbnail ?? 'img/courses-1.jpg';
+                            ?>
+                            <div class="courses-item position-relative">
+                                <img class="img-fluid" src="<?php echo htmlspecialchars($thumbnail); ?>" alt="<?php echo htmlspecialchars($course->title); ?>" style="height: 200px; width: 100%; object-fit: cover;">
+                                <div class="courses-text">
+                                    <h4 class="text-center text-white px-3"><?php echo htmlspecialchars($course->title); ?></h4>
+                                    <div class="border-top w-100 mt-3">
+                                        <div class="d-flex justify-content-between p-4">
+                                            <span class="text-white"><i class="fa fa-user mr-2"></i><?php echo htmlspecialchars($course->teacher_name); ?></span>
+                                            <span class="text-white"><i class="fa fa-dollar-sign mr-2"></i><?php echo number_format($course->price, 2); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="w-100 bg-white text-center p-4" >
+                                        <a class="btn btn-primary" href="course-detail.php?id=<?php echo $course->id; ?>">Course Detail</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                    }
+                } catch (\Exception $e) {
+                    error_log('Error in index.php courses section: ' . $e->getMessage());
+                    ?>
+                    <div class="courses-item position-relative">
+                        <div class="courses-text">
+                            <h4 class="text-center text-white px-3">Error loading courses</h4>
+                            <div class="w-100 bg-white text-center p-4">
+                                <p class="text-danger">Please try again later.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
-                    </div>
-                </div>
+                    <?php
+                }
+                ?>
             </div>
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-2.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
-                        </div>
-                    </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
-                    </div>
-                </div>
-            </div>
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-3.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
-                        </div>
-                    </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
-                    </div>
-                </div>
-            </div>
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-4.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
-                        </div>
-                    </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
-                    </div>
-                </div>
-            </div>
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-5.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
-                        </div>
-                    </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
-                    </div>
-                </div>
-            </div>
-            <div class="courses-item position-relative">
-                <img class="img-fluid" src="img/courses-6.jpg" alt="">
-                <div class="courses-text">
-                    <h4 class="text-center text-white px-3">Web design & development courses for beginners</h4>
-                    <div class="border-top w-100 mt-3">
-                        <div class="d-flex justify-content-between p-4">
-                            <span class="text-white"><i class="fa fa-user mr-2"></i>Jhon Doe</span>
-                            <span class="text-white"><i class="fa fa-star mr-2"></i>4.5 <small>(250)</small></span>
-                        </div>
-                    </div>
-                    <div class="w-100 bg-white text-center p-4" >
-                        <a class="btn btn-primary" href="detail.html">Course Detail</a>
+        </div>
+        <!-- Debug info -->
+        <div class="container mt-3" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <?php
+                        if (isset($courses)) {
+                            echo "Number of courses: " . count($courses);
+                        } else {
+                            echo "No courses variable set";
+                        }
+                        ?>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- End debug info -->
         <div class="row justify-content-center bg-image mx-0 mb-5">
             <div class="col-lg-6 py-5">
                 <div class="bg-white p-5 my-5">
@@ -248,10 +271,14 @@
                             <div class="col-sm-6">
                                 <div class="form-group">
                                     <select class="custom-select bg-light border-0 px-3" style="height: 60px;">
-                                        <option selected>Select A courses</option>
-                                        <option value="1">courses 1</option>
-                                        <option value="2">courses 1</option>
-                                        <option value="3">courses 1</option>
+                                        <option selected>Select A Course</option>
+                                        <?php
+                                        if ($courses) {
+                                            foreach ($courses as $course) {
+                                                echo '<option value="' . $course->id . '">' . htmlspecialchars($course->title) . '</option>';
+                                            }
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                             </div>
@@ -448,4 +475,4 @@
     <!-- Contact End -->
 
 
-<?php include 'footer.php'; ?>
+<?php  include 'footer.php'; ?>

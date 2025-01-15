@@ -2,27 +2,32 @@
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use App\Models\Session;
-use App\Models\Course;
+use App\Models\AdminCourse;
 
 header('Content-Type: application/json');
 
+Session::start();
+
+// Check if user is admin
+if (Session::get('role') !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit();
+}
+
 try {
-    Session::start();
+    // Get course ID from POST data
+    $courseId = $_POST['courseId'] ?? null;
     
-    if (Session::get('role') !== 'teacher') {
-        throw new Exception('Unauthorized access');
-    }
-
-    // Get JSON data
-    $data = json_decode(file_get_contents('php://input'), true);
-    $courseId = $data['courseId'] ?? null;
-
     if (!$courseId) {
         throw new Exception('Course ID is required');
     }
 
-    $courseModel = new Course();
-    if ($courseModel->delete($courseId, Session::get('user_id'))) {
+    // Create AdminCourse instance
+    $courseModel = new AdminCourse();
+    
+    // Delete the course
+    if ($courseModel->deleteCourse($courseId)) {
         echo json_encode([
             'success' => true,
             'message' => 'Course deleted successfully'
@@ -32,7 +37,7 @@ try {
     }
 
 } catch (Exception $e) {
-    http_response_code(500);
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
