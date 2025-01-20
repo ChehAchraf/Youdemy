@@ -29,8 +29,8 @@ try {
 ?>
 
     <!-- Header Start -->
-    <div class="jumbotron jumbotron-fluid position-relative overlay-bottom" style="margin-bottom: 90px;">
-        <div class="container text-center my-5 py-5">
+    <div id="my-background" class="jumbotron jumbotron-fluid position-relative overlay-bottom" style="margin-bottom: 90px;">
+        <div class="container text-center my-5 py-5" data-aos="fade-up">
             <h1 class="text-white mt-4 mb-4">Learn From Home</h1>
             <h1 class="text-white display-1 mb-5">Education Courses</h1>
             <div class="mx-auto mb-5" style="width: 100%; max-width: 600px;">
@@ -59,12 +59,12 @@ try {
     <div class="container-fluid py-5">
         <div class="container py-5">
             <div class="row">
-                <div class="col-lg-5 mb-5 mb-lg-0" style="min-height: 500px;">
+                <div class="col-lg-5 mb-5 mb-lg-0" style="min-height: 500px;" data-aos="fade-up">
                     <div class="position-relative h-100">
                         <img class="position-absolute w-100 h-100" src="img/about.jpg" style="object-fit: cover;">
                     </div>
                 </div>
-                <div class="col-lg-7">
+                <div class="col-lg-7" data-aos="fade-up">
                     <div class="section-title position-relative mb-4">
                         <h6 class="d-inline-block position-relative text-secondary text-uppercase pb-2">About Us</h6>
                         <h1 class="display-4">First Choice For Online Education Anywhere</h1>
@@ -107,7 +107,7 @@ try {
     <div class="container-fluid bg-image" style="margin: 90px 0;">
         <div class="container">
             <div class="row">
-                <div class="col-lg-7 my-5 pt-5 pb-lg-5">
+                <div class="col-lg-7 my-5 pt-5 pb-lg-5" data-aos="fade-up">
                     <div class="section-title position-relative mb-4">
                         <h6 class="d-inline-block position-relative text-secondary text-uppercase pb-2">Why Choose Us?</h6>
                         <h1 class="display-4">Why You Should Start Learning with Us?</h1>
@@ -141,7 +141,7 @@ try {
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-5" style="min-height: 500px;">
+                <div class="col-lg-5" style="min-height: 500px;" data-aos="fade-up">
                     <div class="position-relative h-100">
                         <img class="position-absolute w-100 h-100" src="img/feature.jpg" style="object-fit: cover;">
                     </div>
@@ -167,6 +167,9 @@ try {
         .owl-carousel .owl-item {
             min-height: 300px;
         }
+        .owl-item{
+            width: 400px !important;
+        }
     </style>
     <div class="container-fluid px-0 py-5">
         <div class="row mx-0 justify-content-center pt-5">
@@ -189,7 +192,7 @@ try {
                         <div class="courses-item position-relative">
                             <div class="courses-text">
                                 <h4 class="text-center text-white px-3">No courses available</h4>
-                                <div class="w-100 bg-white text-center p-4">
+                                <div class="w-80 bg-white text-center p-4">
                                     <p class="text-muted">Check back later for new courses!</p>
                                 </div>
                             </div>
@@ -200,7 +203,7 @@ try {
                             $thumbnail = $course->thumbnail ?? 'img/courses-1.jpg';
                             ?>
                             <div class="courses-item position-relative">
-                                <img class="img-fluid" src="<?php echo htmlspecialchars($thumbnail); ?>" alt="<?php echo htmlspecialchars($course->title); ?>" style="height: 200px; width: 100%; object-fit: cover;">
+                                <img class="img-fluid" src="../<?php echo htmlspecialchars($thumbnail); ?>" alt="<?php echo htmlspecialchars($course->title); ?>" style="height: 200px; width: 100%; object-fit: cover;">
                                 <div class="courses-text">
                                     <h4 class="text-center text-white px-3"><?php echo htmlspecialchars($course->title); ?></h4>
                                     <div class="border-top w-100 mt-3">
@@ -210,7 +213,7 @@ try {
                                         </div>
                                     </div>
                                     <div class="w-100 bg-white text-center p-4" >
-                                        <a class="btn btn-primary" href="course-detail.php?id=<?php echo $course->id; ?>">Course Detail</a>
+                                        <a class="btn btn-primary" href="detail.php?id=<?php echo $course->id; ?>">Course Detail</a>
                                     </div>
                                 </div>
                             </div>

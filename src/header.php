@@ -15,11 +15,13 @@ Session::start(); // Make sure session is started before any session operations
     <meta content="Free HTML Templates" name="description">
 
     <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon">
+    <link href="../uploads/img/django.png" rel="icon">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"> 
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
@@ -35,6 +37,8 @@ Session::start(); // Make sure session is started before any session operations
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="three.r134.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <!-- Import HTMX after Bootstrap -->
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 
@@ -50,6 +54,7 @@ Session::start(); // Make sure session is started before any session operations
             }
         });
     });
+
     </script>
 </head>
 
@@ -100,7 +105,16 @@ Session::start(); // Make sure session is started before any session operations
                 <div class="navbar-nav mx-auto py-0">
                     <a href="index.php" class="nav-item nav-link">Home</a>
                     <a href="about.php" class="nav-item nav-link">About</a>
-                    <a href="course.php" class="nav-item nav-link">Courses</a>
+                    <?php if (Session::isLoggedIn()): ?>
+                        <?php if (Session::get('role') === 'student'): ?>
+                            <a href="courses.php" class="nav-item nav-link">Courses</a>
+                            <a href="my-courses.php" class="nav-item nav-link">My Courses</a>
+                        <?php elseif (Session::get('role') === 'teacher'): ?>
+                            <a href="teacher.php" class="nav-item nav-link">
+                                <i class="fa fa-chalkboard-teacher mr-2"></i>Teacher Dashboard
+                            </a>
+                        <?php endif; ?>
+                    <?php endif; ?>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Pages</a>
                         <div class="dropdown-menu m-0">

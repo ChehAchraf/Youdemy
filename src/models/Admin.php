@@ -255,7 +255,7 @@ class Admin extends User implements ICategory, ITag, ICourse {
 
     public function deleteCategory(int $id): bool {
         try {
-            // First check if category has any courses
+            //  check if category has any courses
             $checkStmt = $this->db->prepare("
                 SELECT COUNT(*) as count 
                 FROM courses 
@@ -322,7 +322,7 @@ class Admin extends User implements ICategory, ITag, ICourse {
                 'existing' => []
             ];
 
-            // First, get all existing tags that match our input
+            //  get all existing tags that match our input
             $placeholders = str_repeat('?,', count($tags) - 1) . '?';
             $stmt = $this->db->prepare("
                 SELECT name 
@@ -332,12 +332,12 @@ class Admin extends User implements ICategory, ITag, ICourse {
             $stmt->execute($tags);
             $existingTags = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            // Filter out existing tags
+            // Filter  existing tags
             $newTags = array_diff($tags, $existingTags);
             $result['existing'] = $existingTags;
 
             if (!empty($newTags)) {
-                // Prepare the insert statement
+                // insert statement
                 $insertPlaceholders = str_repeat('(?),', count($newTags) - 1) . '(?)';
                 $insertStmt = $this->db->prepare("
                     INSERT INTO tags (name) 

@@ -16,7 +16,7 @@ class TeacherCourse extends Course {
                 'existing' => []
             ];
 
-            // First, get all existing tags that match our input
+            
             $placeholders = str_repeat('?,', count($tagNames) - 1) . '?';
             $stmt = $this->db->prepare("
                 SELECT id, name 
@@ -33,11 +33,11 @@ class TeacherCourse extends Course {
             
             $result['existing'] = $existingTags;
 
-            // Filter out new tags
+           
             $newTags = array_diff($tagNames, $existingTagNames);
 
             if (!empty($newTags)) {
-                // Prepare the insert statement
+                
                 $insertPlaceholders = str_repeat('(?),', count($newTags) - 1) . '(?)';
                 $insertStmt = $this->db->prepare("
                     INSERT INTO tags (name) 
@@ -48,7 +48,7 @@ class TeacherCourse extends Course {
                 $insertValues = array_values($newTags);
                 $insertStmt->execute($insertValues);
 
-                // Get the newly inserted tags
+                
                 $newTagsStmt = $this->db->prepare("
                     SELECT id, name 
                     FROM tags 
@@ -72,18 +72,18 @@ class TeacherCourse extends Course {
 
     public function addCourse(array $courseData): bool {
         try {
-            // Validate course data
+            
             $this->validateCourseData($courseData);
 
-            // Start transaction
+            
             $this->db->beginTransaction();
 
-            // Process tags if provided
+            
             $tags = [];
             if (!empty($courseData['tags'])) {
-                // Split tags by comma and trim whitespace
+                
                 $tagNames = array_map('trim', explode(',', $courseData['tags']));
-                // Remove empty tags
+                
                 $tagNames = array_filter($tagNames);
                 
                 if (!empty($tagNames)) {
@@ -91,11 +91,11 @@ class TeacherCourse extends Course {
                 }
             }
 
-            // Teachers can only create pending courses
+            
             $courseData['teacherId'] = $this->user_id;
             $courseData['isApproved'] = 0;
 
-            // Insert the course
+            
             $stmt = $this->db->prepare("
                 INSERT INTO courses (
                     title, description, price, categoryId, teacherId, 
@@ -120,7 +120,7 @@ class TeacherCourse extends Course {
             $stmt->execute($params);
             $courseId = $this->db->lastInsertId();
 
-            // Insert tags if we have any
+            
             if (!empty($tags)) {
                 $tagValues = [];
                 $tagParams = [];
@@ -147,7 +147,7 @@ class TeacherCourse extends Course {
 
     public function displayCourse(int $id): ?object {
         try {
-            // Teachers can only view their own courses
+            
             $stmt = $this->db->prepare("
                 SELECT c.*, 
                        cat.name as category_name,
@@ -175,7 +175,7 @@ class TeacherCourse extends Course {
             $result = $stmt->fetch(PDO::FETCH_OBJ);
             
             if ($result) {
-                // Add teacher-specific permissions
+                
                 $result->can_edit = true;
                 $result->can_delete = true;
                 $result->awaiting_approval = ($result->isApproved == 0 && $result->rejectedBy === null);
@@ -267,6 +267,77 @@ class TeacherCourse extends Course {
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\Exception $e) {
             error_log('Error in TeacherCourse::getDeletedCourses: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function updateCourse(array $courseData): bool {
+        try {
+            if (!isset($courseData['id'])) {
+                throw new \Exception('Course ID is required');
+            }
+
+            $checkStmt = $this->db->prepare("
+                SELECT id FROM courses 
+                WHERE id = :id 
+                AND teacherId = :teacherId
+                AND deleted_at IS NULL
+            ");
+            $checkStmt->execute([
+                ':id' => $courseData['id'],
+                ':teacherId' => $this->user_id
+            ]);
+
+            if (!$checkStmt->fetch()) {
+                throw new \Exception('Course not found or access denied');
+            }
+
+            $updateFields = [];
+            $params = [':id' => $courseData['id']];
+
+            if (isset($courseData['title'])) {
+                $updateFields[] = 'title = :title';
+                $params[':title'] = $courseData['title'];
+            }
+            if (isset($courseData['description'])) {
+                $updateFields[] = 'description = :description';
+                $params[':description'] = $courseData['description'];
+            }
+            if (isset($courseData['price'])) {
+                $updateFields[] = 'price = :price';
+                $params[':price'] = $courseData['price'];
+            }
+            if (isset($courseData['categoryId'])) {
+                $updateFields[] = 'categoryId = :categoryId';
+                $params[':categoryId'] = $courseData['categoryId'];
+            }
+
+            // Add optional fields
+            if (isset($courseData['thumbnail'])) {
+                $updateFields[] = 'thumbnail = :thumbnail';
+                $params[':thumbnail'] = $courseData['thumbnail'];
+            }
+            if (isset($courseData['media'])) {
+                $updateFields[] = 'media = :media';
+                $params[':media'] = $courseData['media'];
+            }
+
+            if (empty($updateFields)) {
+                throw new \Exception('No fields to update');
+            }
+
+            $sql = "UPDATE courses SET " . implode(', ', $updateFields) . " WHERE id = :id";
+            $stmt = $this->db->prepare($sql);
+            $result = $stmt->execute($params);
+
+            if (!$result) {
+                throw new \Exception('Failed to update course');
+            }
+
+            return true;
+
+        } catch (\Exception $e) {
+            error_log('Error in TeacherCourse::updateCourse: ' . $e->getMessage());
             throw $e;
         }
     }

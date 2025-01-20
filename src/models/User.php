@@ -24,7 +24,7 @@ class User {
         $this->role = $role;
         $this->is_active = $is_active;
         $this->hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $this->verification_status = 'approved'; // Default for students
+        $this->verification_status = 'approved'; 
     }
 
     public function setSpecialization($specialization) {
@@ -40,7 +40,7 @@ class User {
         $conn = $db->getConnection();
 
         try {
-            // Check if email exists
+            
             $checkStmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
             $checkStmt->execute([$this->email]);
             if ($checkStmt->fetch()) {

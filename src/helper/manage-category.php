@@ -6,7 +6,6 @@ use App\Models\Admin;
 
 Session::start();
 
-// Check if user is admin
 if (Session::get('role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -83,4 +82,4 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
-} 
+}

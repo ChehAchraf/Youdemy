@@ -21,27 +21,26 @@ class MediaUploader {
             throw new Exception('No file uploaded');
         }
 
-        // Validate file type
+        
         if (!in_array($file['type'], $this->allowedTypes[$type])) {
             throw new Exception('Invalid file type');
         }
 
-        // Validate file size
+        
         if ($file['size'] > $this->maxSize) {
             throw new Exception('File too large');
         }
 
-        // Generate unique filename
+        
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = uniqid() . '.' . $extension;
         $filepath = $this->uploadDir . $type . 's/' . $filename;
 
-        // Move file to upload directory
         if (!move_uploaded_file($file['tmp_name'], $filepath)) {
             throw new Exception('Failed to move uploaded file');
         }
 
-        // Save file info to database
+        
         $stmt = $this->db->prepare("INSERT INTO media_files (fileName, fileType, filePath, fileSize) VALUES (?, ?, ?, ?)");
         $stmt->execute([$filename, $type, $filepath, $file['size']]);
 

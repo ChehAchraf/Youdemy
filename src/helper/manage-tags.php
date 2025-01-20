@@ -6,7 +6,6 @@ use App\Models\Admin;
 
 Session::start();
 
-// Check if user is admin
 if (Session::get('role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -25,9 +24,8 @@ try {
                 throw new Exception('Tags are required');
             }
             
-            // Split tags by comma and trim whitespace
             $tags = array_map('trim', explode(',', $tagsString));
-            $tags = array_filter($tags); // Remove empty values
+            $tags = array_filter($tags);
             
             if (empty($tags)) {
                 throw new Exception('No valid tags provided');
@@ -92,4 +90,4 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
-} 
+}

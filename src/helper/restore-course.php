@@ -6,7 +6,6 @@ use App\Models\Course;
 
 Session::start();
 
-// Check if user is admin
 if (Session::get('role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);

@@ -83,7 +83,12 @@
     <script src="lib/easing/easing.min.js"></script>
     <script src="lib/waypoints/waypoints.min.js"></script>
     <script src="lib/counterup/counterup.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+    
+    <!-- Three.js and Vanta.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
 
     <!-- Template Javascript -->
     <script>
@@ -93,17 +98,13 @@
             // Initialize carousels
             var $coursesCarousel = $(".courses-carousel");
             var $carouselItems = $coursesCarousel.find('.courses-item');
-            console.log('Found courses carousel elements:', $coursesCarousel.length);
-            console.log('Found course items:', $carouselItems.length);
-            console.log('Carousel HTML:', $coursesCarousel.html());
             
             if ($coursesCarousel.length > 0) {
                 try {
                     $coursesCarousel.owlCarousel({
                         autoplay: true,
                         smartSpeed: 1500,
-                        loop: $carouselItems.length > 1,  // Only loop if we have multiple items
-                        dots: false,
+                        loop: $carouselItems.length > 1,
                         nav : false,
                         margin: 20,
                         responsive: {
@@ -112,16 +113,36 @@
                             768: { items: Math.min(3, $carouselItems.length) },
                             992: { items: Math.min(4, $carouselItems.length) }
                         }
-                    }).on('initialized.owl.carousel', function(e) {
-                        console.log('Courses carousel initialized with', e.item.count, 'items');
                     });
-                    console.log('Carousel initialized successfully');
                 } catch (error) {
                     console.error('Error initializing carousel:', error);
                 }
-            } else {
-                console.log('No carousel container found!');
-                console.log('Page HTML:', $('body').html());
+            }
+
+            // Initialize AOS
+            AOS.init();
+
+            // Initialize Vanta.js NET effect
+            const backgroundElement = document.getElementById('my-background');
+            if (backgroundElement && window.VANTA) {
+                try {
+                    VANTA.NET({
+                        el: backgroundElement,
+                        mouseControls: true,
+  touchControls: true,
+  gyroControls: false,
+  minHeight: 200.00,
+  minWidth: 200.00,
+  scale: 1.00,
+  scaleMobile: 1.00,
+  color: 0x777777,
+  backgroundColor: 0x1f1f1f,
+  maxDistance: 19.00,
+  spacing: 16.00
+                    });
+                } catch (error) {
+                    console.error('Error initializing VANTA:', error);
+                }
             }
         });
     </script>

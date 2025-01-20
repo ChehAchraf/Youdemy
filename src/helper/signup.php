@@ -36,4 +36,4 @@ try {
     http_response_code(500);
     echo "<div class='alert alert-danger text-center'>Server error: " . $e->getMessage() . "</div>";
 }
-    ?>
+?>

@@ -87,18 +87,15 @@ include 'header.php';
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th>Course Name</th>
+                                        <th>Course</th>
                                         <th>Category</th>
                                         <th>Price</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="course-table-body">
                                     <?php
-                                    $courseModel = new TeacherCourse();
-                                    $courses = $courseModel->getAllCourses();
-
                                     if ($courses) {
                                         foreach($courses as $course) {
                                             $statusClass = match($course->status_label) {
@@ -107,16 +104,16 @@ include 'header.php';
                                                 default => 'warning'
                                             };
                                                 
-                                            echo "<tr>
+                                            echo "<tr id='course-row-{$course->id}'>
                                                 <td>
-                                                    <img src='{$course->thumbnail}' alt='thumbnail' class='img-thumbnail mr-2' style='width: 50px; height: 50px; object-fit: cover;'>
+                                                    <img src='../{$course->thumbnail}' alt='thumbnail' class='img-thumbnail mr-2' style='width: 50px; height: 50px; object-fit: cover;'>
                                                     " . htmlspecialchars($course->title) . "
                                                 </td>
                                                 <td>" . htmlspecialchars($course->category_name) . "</td>
                                                 <td>$" . number_format($course->price, 2) . "</td>
                                                 <td><span class='badge badge-{$statusClass}'>{$course->status_label}</span></td>
-                                                <td>
-                                                    <button class='btn btn-sm btn-primary' onclick='editCourse({$course->id})'>
+                                                <td class='d-flex justify-content-center'>
+                                                    <button class='btn  btn-sm btn-primary' onclick='editCourse({$course->id})'>
                                                         <i class='fas fa-edit'></i>
                                                     </button>
                                                     <button class='btn btn-sm btn-danger' onclick='deleteCourse({$course->id})'>
@@ -141,7 +138,8 @@ include 'header.php';
                               hx-encoding="multipart/form-data"
                               hx-indicator="#loading"
                               hx-target="#add-course-response"
-                              hx-swap="innerHTML">
+                              hx-swap="innerHTML"
+                              id="courseForm">
                             <div id="loading" class="htmx-indicator">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="sr-only">Loading...</span>
@@ -152,8 +150,9 @@ include 'header.php';
                                 <input type="text" name="title" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label>Description</label>
-                                <textarea name="description" class="form-control" rows="4" required></textarea>
+                                <label for="description">Course Description</label>
+                                <div id="description" style="height: 300px;"></div>
+                                <input type="hidden" name="description" id="descriptionInput">
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6">
@@ -174,15 +173,22 @@ include 'header.php';
                                     <input type="number" name="price" step="0.01" class="form-control" required>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label>Thumbnail</label>
-                                    <input type="file" name="thumbnail" class="form-control" accept="image/*" required>
+                            <div class="form-group">
+                                <label>Course Media (Video or Downloadable Material)</label>
+                                <div class="custom-file">
+                                    <input type="file" 
+                                           class="custom-file-input" 
+                                           id="courseMedia" 
+                                           name="media" 
+                                           accept=".mp4,.webm,.ogg,.pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                                    <label class="custom-file-label" for="courseMedia">Choose file</label>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label>The course content</label>
-                                    <input type="file" name="content" class="form-control" accept="video/*,.pdf" required>
-                                </div>
+                                <small class="form-text text-muted">
+                                    Supported formats:<br>
+                                    - Videos: MP4, WebM, OGG<br>
+                                    - Documents: PDF, DOC, DOCX, PPT, PPTX<br>
+                                    - Archives: ZIP, RAR
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label>Tags (comma separated)</label>
@@ -276,80 +282,256 @@ include 'header.php';
 </div>
 <!-- Dashboard End -->
 
+<!-- Add Quill CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
 <!-- Add SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-document.body.addEventListener('htmx:afterRequest', function(evt) {
-    const response = JSON.parse(evt.detail.xhr.response);
-    
-    if (response.success) {
-        Swal.fire({
-            title: 'Success!',
-            text: response.message,
-            icon: 'success',
-            confirmButtonColor: '#3085d6'
-        }).then(() => {
-            // Reset form
-            evt.detail.target.reset();
-            // Switch to courses tab
-            document.querySelector('[href="#my-courses"]').click();
-        });
-    } else {
-        Swal.fire({
-            title: 'Error!',
-            text: response.message,
-            icon: 'error',
-            confirmButtonColor: '#d33'
-        });
-    }
-});
+<!-- Add Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
-function deleteCourse(courseId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('helper/delete-course.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ courseId: courseId })
-            })
+<!-- Edit Course Modal -->
+<div class="modal fade" id="editCourseModal" tabindex="-1" role="dialog" aria-labelledby="editCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCourseModalLabel">Edit Course</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editCourseForm" 
+                      hx-post="helper/edit-course.php" 
+                      hx-encoding="multipart/form-data"
+                      hx-target="#course-table-body"
+                      hx-swap="innerHTML">
+                    <input type="hidden" name="courseId" id="editCourseId">
+                    <div class="form-group">
+                        <label>Course Title</label>
+                        <input type="text" name="title" id="editTitle" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Course Description</label>
+                        <div id="editDescription" style="height: 300px;"></div>
+                        <input type="hidden" name="description" id="editDescriptionInput">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Category</label>
+                            <select name="categoryId" id="editCategory" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <?php
+                                $categories = $db->query("SELECT id, name FROM categories ORDER BY name");
+                                while ($category = $categories->fetch(PDO::FETCH_OBJ)) {
+                                    echo "<option value='" . $category->id . "'>" . htmlspecialchars($category->name) . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Price ($)</label>
+                            <input type="number" name="price" id="editPrice" step="0.01" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>New Thumbnail (optional)</label>
+                            <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                            <small class="form-text text-muted">Leave empty to keep current thumbnail</small>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>New Course Content (optional)</label>
+                            <input type="file" name="content" class="form-control">
+                            <small class="form-text text-muted">Leave empty to keep current content</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Quill Configuration
+        const quillConfig = {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'header': 1 }, { 'header': 2 }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image', 'video']
+                ]
+            }
+        };
+
+        // Initialize Quill for add course form
+        const addEditor = new Quill('#description', quillConfig);
+        let editEditor = null;
+
+        // Handle edit course modal
+        $('#editCourseModal').on('shown.bs.modal', function () {
+            if (!editEditor) {
+                editEditor = new Quill('#editDescription', quillConfig);
+                const courseId = document.getElementById('editCourseId').value;
+                if (courseId) {
+                    fetch(`helper/get-course.php?id=${courseId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.course.description) {
+                                editEditor.root.innerHTML = data.course.description;
+                            }
+                        });
+                }
+            }
+        });
+
+        $('#editCourseModal').on('hidden.bs.modal', function () {
+            if (editEditor) {
+                editEditor = null;
+                document.querySelector('#editDescription').innerHTML = '';
+            }
+        });
+
+        // HTMX Events
+        htmx.on('#editCourseForm', 'htmx:configRequest', function(evt) {
+            if (editEditor) {
+                document.getElementById('editDescriptionInput').value = editEditor.root.innerHTML;
+            }
+        });
+
+        htmx.on('#courseForm', 'htmx:configRequest', function(evt) {
+            evt.detail.parameters['description'] = addEditor.root.innerHTML;
+        });
+
+        htmx.on('#editCourseForm', 'htmx:beforeRequest', function(evt) {
+            // Show loading state
+            Swal.fire({
+                title: 'Updating...',
+                text: 'Please wait while we update the course',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        });
+
+        htmx.on('#editCourseForm', 'htmx:afterRequest', function(evt) {
+            let response;
+            try {
+                response = JSON.parse(evt.detail.xhr.response);
+            } catch (e) {
+                console.error('Response:', evt.detail.xhr.response);
+                console.error('Parse error:', e);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Server error occurred. Please check the console for details.',
+                    icon: 'error'
+                });
+                return;
+            }
+
+            if (response.success) {
+                $('#editCourseModal').modal('hide');
+                document.getElementById('course-table-body').innerHTML = response.html;
+                Swal.fire({
+                    title: 'Success',
+                    text: response.message,
+                    icon: 'success'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: response.message || 'Failed to update course',
+                    icon: 'error'
+                });
+            }
+        });
+
+        htmx.on('#editCourseForm', 'htmx:error', function(evt) {
+            console.error('HTMX Error:', evt.detail.error);
+            console.error('Response:', evt.detail.xhr.response);
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to update course. Please try again.',
+                icon: 'error'
+            });
+        });
+
+        // Update file input label with selected filename
+        document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+            var fileName = e.target.files[0].name;
+            var nextSibling = e.target.nextElementSibling;
+            nextSibling.innerText = fileName;
+
+            // Check file size
+            var fileSize = e.target.files[0].size;
+            var maxSize = 500 * 1024 * 1024; // 500MB
+            if (fileSize > maxSize) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Please select a file smaller than 500MB'
+                });
+                e.target.value = ''; // Clear the file input
+                nextSibling.innerText = 'Choose file';
+                return;
+            }
+
+            // Check file type
+            var fileExtension = fileName.split('.').pop().toLowerCase();
+            var allowedExtensions = ['mp4', 'webm', 'ogg', 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'rar'];
+            if (!allowedExtensions.includes(fileExtension)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid File Type',
+                    text: 'Please select a supported file format'
+                });
+                e.target.value = '';
+                nextSibling.innerText = 'Choose file';
+            }
+        });
+    });
+
+    function editCourse(courseId) {
+        fetch(`helper/get-course.php?id=${courseId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire(
-                        'Deleted!',
-                        'Your course has been deleted.',
-                        'success'
-                    ).then(() => {
-                        location.reload();
-                    });
+                    const course = data.course;
+                    document.getElementById('editCourseId').value = course.id;
+                    document.getElementById('editTitle').value = course.title;
+                    document.getElementById('editCategory').value = course.categoryId;
+                    document.getElementById('editPrice').value = course.price;
+                    
+                    $('#editCourseModal').modal('show');
                 } else {
-                    Swal.fire(
-                        'Error!',
-                        data.message,
-                        'error'
-                    );
+                    Swal.fire('Error', data.message, 'error');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to load course details', 'error');
             });
-        }
-    });
-}
-
-function editCourse(courseId) {
-    // Implement edit functionality
-    window.location.href = `edit-course.php?id=${courseId}`;
-}
+    }
 </script>
 
-<!-- Remove multiple footer includes -->
 <?php include 'footer.php'; ?> 

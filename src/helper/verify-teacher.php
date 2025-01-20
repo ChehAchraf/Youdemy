@@ -4,16 +4,12 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use App\Models\Session;
 use App\Models\Admin;
 
-// Start session if not already started
 Session::start();
 
-// Prevent PHP warnings from being included in output
 error_reporting(E_ERROR | E_PARSE);
 
-// Set header to return JSON response
 header('Content-Type: application/json');
 
-// Check if user is logged in and is an admin
 if (!Session::get('user_id') || Session::get('role') !== 'admin') {
     echo json_encode([
         'success' => false,
@@ -23,7 +19,6 @@ if (!Session::get('user_id') || Session::get('role') !== 'admin') {
 }
 
 try {
-    // Get JSON data from request body
     $jsonData = file_get_contents('php://input');
     $data = json_decode($jsonData);
 

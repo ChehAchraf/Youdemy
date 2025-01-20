@@ -8,7 +8,6 @@ header('Content-Type: application/json');
 
 Session::start();
 
-// Check if user is admin
 if (Session::get('role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -16,7 +15,6 @@ if (Session::get('role') !== 'admin') {
 }
 
 try {
-    // Get course ID and reason from POST data
     $courseId = $_POST['courseId'] ?? null;
     $reason = $_POST['reason'] ?? null;
     
@@ -28,12 +26,9 @@ try {
         throw new Exception('Rejection reason is required');
     }
 
-    // Create AdminCourse instance
     $courseModel = new AdminCourse();
     
-    // Reject the course
     if ($courseModel->rejectCourse($courseId, $reason)) {
-        // Get updated course data for the row
         $updatedCourse = $courseModel->displayCourse($courseId);
         $statusClass = match($updatedCourse->status_label) {
             'Approved' => 'success',
@@ -41,7 +36,6 @@ try {
             default => 'warning'
         };
 
-        // Return updated HTML for the row
         $html = "<tr id='course-{$updatedCourse->id}'>
             <td>
                 <img src='{$updatedCourse->thumbnail}' alt='thumbnail' class='img-thumbnail mr-2' style='width: 50px; height: 50px; object-fit: cover;'>
@@ -91,4 +85,4 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
-} 
+}

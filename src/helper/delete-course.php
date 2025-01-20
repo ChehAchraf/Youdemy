@@ -8,7 +8,6 @@ header('Content-Type: application/json');
 
 Session::start();
 
-// Check if user is admin
 if (Session::get('role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -16,17 +15,14 @@ if (Session::get('role') !== 'admin') {
 }
 
 try {
-    // Get course ID from POST data
     $courseId = $_POST['courseId'] ?? null;
     
     if (!$courseId) {
         throw new Exception('Course ID is required');
     }
 
-    // Create AdminCourse instance
     $courseModel = new AdminCourse();
     
-    // Delete the course
     if ($courseModel->deleteCourse($courseId)) {
         echo json_encode([
             'success' => true,
@@ -42,4 +38,4 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
-} 
+}

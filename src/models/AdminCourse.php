@@ -5,7 +5,6 @@ use \PDO;
 
 class AdminCourse extends Course {
     public function addCourse(array $courseData): bool {
-        // Admins cannot create courses
         throw new \Exception('Admins cannot create courses directly. Only teachers can create courses.');
     }
 
@@ -32,7 +31,7 @@ class AdminCourse extends Course {
 
     public function displayCourse(int $id): ?object {
         try {
-            // Admins can view all courses with additional information
+            // view all courses with additional information
             $stmt = $this->db->prepare("
                 SELECT c.*, 
                        cat.name as category_name,
@@ -64,7 +63,6 @@ class AdminCourse extends Course {
             $result = $stmt->fetch(PDO::FETCH_OBJ);
             
             if ($result) {
-                // Add admin-specific permissions and information
                 $result->can_edit = true;
                 $result->can_delete = true;
                 $result->can_approve = ($result->isApproved == 0 && $result->rejectedBy === null);
