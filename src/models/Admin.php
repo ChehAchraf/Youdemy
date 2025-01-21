@@ -561,7 +561,7 @@ class Admin extends User implements ICategory, ITag, ICourse {
                 WHERE c.deleted_at IS NULL
             ";
 
-            // Apply filters
+            
             $params = [];
             
             if (isset($filters['categoryId'])) {
@@ -593,7 +593,7 @@ class Admin extends User implements ICategory, ITag, ICourse {
 
     public function rejectTeacher(int $teacherId, string $reason): bool {
         try {
-            // Check if teacher exists and is pending
+            
             $stmt = $this->db->prepare("
                 SELECT * FROM users 
                 WHERE id = ? 
@@ -606,7 +606,7 @@ class Admin extends User implements ICategory, ITag, ICourse {
                 throw new \Exception('Teacher not found or not in pending status');
             }
 
-            // Update teacher status to rejected
+            
             $stmt = $this->db->prepare("
                 UPDATE users 
                 SET verification_status = 'rejected',
